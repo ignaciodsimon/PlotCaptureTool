@@ -21,6 +21,8 @@ min_current = 0
 max_voltage = 0
 max_current = 0
 yesNoReturnedValue = 0
+log_X_axis = False
+log_Y_axis = True
 
 
 class YesNoDialog:
@@ -158,10 +160,28 @@ def onCapturePlotWindowClosedEvent(event):
     # Scales the points from pixels to the units of the plot
     for indexCurve in range(len(curvesVoltages)):
         for indexPoint in range(len(curvesData[indexCurve])):
+
+            # Calculate the X,Y position relative to the limits
             currentX = curvesData[indexCurve][indexPoint][0]
             currentY = curvesData[indexCurve][indexPoint][1]
-            newX = (currentX - min_x_axis) / (max_x_axis - min_x_axis) * (max_voltage - min_voltage) + min_voltage
-            newY = (currentY - min_y_axis) / (max_y_axis - min_y_axis) * (max_current - min_current) + min_current
+
+            # Scale the value according to the linear / log scale
+            if log_X_axis:
+                _amountOfDecades = np.log10(max_voltage / min_voltage);
+                _logarithmic_compensated_freq_scale = (currentX - min_x_axis) / (max_x_axis - min_x_axis)
+                _logarithmic_compensated_freq_scale = (np.power(10, _logarithmic_compensated_freq_scale * _amountOfDecades) -1 ) / np.power(10, _amountOfDecades);
+                newX = ( _logarithmic_compensated_freq_scale * (max_voltage - min_voltage) ) + min_voltage
+            else:
+                newX = (currentX - min_x_axis) / (max_x_axis - min_x_axis) * (max_voltage - min_voltage) + min_voltage
+
+            if log_Y_axis:
+                _amountOfDecades = np.log10(max_current / min_current);
+                _logarithmic_compensated_freq_scale = (currentY - min_y_axis) / (max_y_axis - min_y_axis)
+                _logarithmic_compensated_freq_scale = (np.power(10, _logarithmic_compensated_freq_scale * _amountOfDecades) -1 ) / np.power(10, _amountOfDecades);
+                newY = ( _logarithmic_compensated_freq_scale * (max_current - min_current) ) + min_current
+            else:
+                newY = (currentY - min_y_axis) / (max_y_axis - min_y_axis) * (max_current - min_current) + min_current
+
             curvesData[indexCurve][indexPoint] = [newX, newY]
             print [currentX, currentY], [newX, newY]
 
